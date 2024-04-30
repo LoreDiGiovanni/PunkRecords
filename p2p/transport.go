@@ -1,9 +1,9 @@
 package p2p
 
-type peer interface {
-    
-}
 
-type transport interface {
-    
+type Peer interface {}
+
+type Transport interface {
+    // Method that have to listen, accept and handle connections
+    ListenAndAccept() error
 }
