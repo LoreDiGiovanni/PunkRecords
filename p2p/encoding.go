@@ -6,22 +6,23 @@ import (
 )
 
 type Decoder interface {
-    Decode(io.Reader,any) error
+    Decode(io.Reader, *Message) error
 }
 
 type GOBDecoder struct{}
-func (d GOBDecoder) Decode(r io.Reader, v any) error {
-    return gob.NewDecoder(r).Decode(v)
+func (d GOBDecoder) Decode(r io.Reader, msg *Message) error {
+    return gob.NewDecoder(r).Decode(&msg.Payload)
 }
 
-type NoDecoder struct{}
-func (d NoDecoder) Decode(r io.Reader, v any) error {
+//Default decoder
+type BytesDecoder struct{}
+func (d BytesDecoder) Decode(r io.Reader, msg *Message) error {
     buffer := make([]byte, 1024)
     n, err := r.Read(buffer)
     if err != nil {
         return err
     }else{
-        copy(v.([]byte), buffer[:n])
+        msg.Payload = buffer[:n]
         return nil
     }
 }
