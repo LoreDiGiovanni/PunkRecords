@@ -3,20 +3,33 @@ package storage
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"io"
-    "strings"
+	"strings"
 )
 
-type Storage interface {
-    writestreem(key string , r io.Reader) error    
+type StorageOpts struct {
+    root string
+    pathTransform PathTransformFunc
 }
 
+type Storage interface {
+    // key is the file name
+    writestreem(key string , r io.Reader) error
+    reedstreem(key string) (io.Reader,error)
+    delete(key string ) error
 
+}
+
+// function that transforms a filename into a path
+// returns the path and the filename
+//you can write your own pathfunc but they are provided by default
 type PathTransformFunc func(string) (string, string)
 
-var NoPathTransformFunc = func(filename string) (string, string) {
+var  NoPathTransformFunc = func(filename string) (string, string) {
     return "./",filename 
 }
+//Content Addrasseble Storage
 var CASPathTransformFunc = func(filename string) (string,string) {
     hash := sha1.Sum([]byte(filename))
     hashStr := hex.EncodeToString(hash[:])
@@ -33,8 +46,10 @@ var CASPathTransformFunc = func(filename string) (string,string) {
     return strings.Join(path,"/"),hashStr
 }
 
-type StorageOpts struct {
-    PathTransformFunc PathTransformFunc
+
+func MakePathToFile(root string,path string,filename string) string{
+    return fmt.Sprintf("%s/%s/%s",root,path,filename)
+
 }
 
 
