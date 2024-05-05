@@ -13,13 +13,9 @@ type DefaultStorage struct {
 
 
 
-func NewDefaultStorage(root string, pathTransform PathTransformFunc) *DefaultStorage {
+func NewDefaultStorage(options StorageOpts) *DefaultStorage {
     return &DefaultStorage{
-        StorageOpts: StorageOpts{
-            root: root,
-            pathTransform: pathTransform,
-            
-        },
+        StorageOpts: options,
     }
 }
 
@@ -61,6 +57,12 @@ func (s *DefaultStorage) reedstreem(key string) ([]byte, error) {
     }
     
 }
+func (s *DefaultStorage) exists(key string) bool {
+    path,name := s.pathTransform(key)
+    pathTofile := MakePathToFile(s.root,path,name)
+    _, err := os.Stat(pathTofile)
+    return err == nil
+}
 
 func (s *DefaultStorage) delete(key string) error {
     path,name := s.pathTransform(key)
@@ -68,4 +70,10 @@ func (s *DefaultStorage) delete(key string) error {
     return os.Remove(pathTofile)
     
 }
+
+func (s *DefaultStorage) deleteAll() error {
+   return os.RemoveAll(s.root)
+}
+
+
 

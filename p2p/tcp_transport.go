@@ -21,15 +21,10 @@ func (p *TCPPeer) Close() error {
     return p.conn.Close()
 }
 
-type TCPTransportOpts struct {
-    ListenAddr string
-    Handshake    HandshakeFunc
-    Decoder      Decoder
-    OnPeer      func(Peer) error
-}
+
 
 type TCPTransport struct {
-    TCPTransportOpts
+    TransportOpts
     listenAddres string  
     listener     net.Listener
     msgch       chan Message
@@ -41,9 +36,9 @@ type TCPTransport struct {
 
 
 
-func NewTCPTransport(opts TCPTransportOpts) *TCPTransport {
+func NewTCPTransport(opts TransportOpts) *TCPTransport {
     return &TCPTransport{
-        TCPTransportOpts: opts,
+        TransportOpts: opts,
         msgch: make(chan Message),
     }
 }

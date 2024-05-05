@@ -11,3 +11,9 @@ type Transport interface {
     // Method return a channel for consume messages     
     Consume() <-chan Message
 }
+type TransportOpts struct {
+    ListenAddr string
+    Handshake    HandshakeFunc
+    Decoder      Decoder
+    OnPeer      func(Peer) error
+}

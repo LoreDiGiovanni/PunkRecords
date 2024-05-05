@@ -1,30 +1,33 @@
 package main
 
 import (
-    "log"
     "github.com/LoreDiGiovanni/punkrecords/p2p"
-    "fmt"
+    "github.com/LoreDiGiovanni/punkrecords/storage"
+    "log"
 )
 
 func main() {
-    tcpOpts := p2p.TCPTransportOpts{
+    transportOpts := p2p.TransportOpts{
         ListenAddr: "127.0.0.1:8000", 
         Handshake: p2p.NoHandshakeFunc,
         Decoder: p2p.BytesDecoder{},
         OnPeer: nil,
     }
-    tr := p2p.NewTCPTransport(tcpOpts) 
+    transport := p2p.NewTCPTransport(transportOpts) 
 
-    go func() {
-        for {
-            msg := <-tr.Consume()
-            fmt.Printf("%s: %s\n", msg.From, msg.Payload)
-        }
-    }()
+    storageOpts := storage.StorageOpts{
+        Root: "./db",
+        PathTransform: storage.CASPathTransformFunc, 
+    }
+    storage := storage.NewDefaultStorage(storageOpts)
+    server := NewServer(transport,storage)
+    err := server.Start()
+    if err != nil {
+        log.Fatal(err)
+    }
 
-    if err := tr.ListenAndAccept(); err != nil { 
-        log.Fatal(err) 
-    } 
+
+     
     
     select {}
 

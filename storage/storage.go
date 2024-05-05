@@ -9,15 +9,17 @@ import (
 )
 
 type StorageOpts struct {
-    root string
-    pathTransform PathTransformFunc
+    Root string
+    PathTransform PathTransformFunc
 }
 
 type Storage interface {
     // key is the file name
     writestreem(key string , r io.Reader) error
-    reedstreem(key string) (io.Reader,error)
+    reedstreem(key string) ([]byte,error)
     delete(key string ) error
+    deleteAll() error 
+    exists(key string) bool
 
 }
 

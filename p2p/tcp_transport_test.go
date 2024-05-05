@@ -8,7 +8,7 @@ import (
 
 
 func TestNewTCPTransport(t *testing.T) {
-    Opts := TCPTransportOpts{
+    Opts := TransportOpts{
         ListenAddr: "127.0.0.1:8000", 
         Handshake: NoHandshakeFunc,
         Decoder: BytesDecoder{},

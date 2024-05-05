@@ -10,7 +10,11 @@ import (
 
 
 func TestDefaultStorage(t *testing.T) {
-    storage := NewDefaultStorage("./db", CASPathTransformFunc)
+    strOpts := StorageOpts{
+        root: "./db",
+        pathTransform: CASPathTransformFunc,
+    }
+    storage := NewDefaultStorage(strOpts)
     assert.NotNil(t, storage)
     expextedPath := "8b5bf/c68fe/7e1e7/575c7/93bc4/d74ab/b8ff6/0ebb1"
     expectedFilename := "8b5bfc68fe7e1e7575c793bc4d74abb8ff60ebb1"
