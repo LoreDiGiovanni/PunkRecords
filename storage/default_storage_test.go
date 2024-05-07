@@ -11,8 +11,8 @@ import (
 
 func TestDefaultStorage(t *testing.T) {
     strOpts := StorageOpts{
-        root: "./db",
-        pathTransform: CASPathTransformFunc,
+        Root: "./db",
+        PathTransform: CASPathTransformFunc,
     }
     storage := NewDefaultStorage(strOpts)
     assert.NotNil(t, storage)

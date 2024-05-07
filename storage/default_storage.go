@@ -20,13 +20,13 @@ func NewDefaultStorage(options StorageOpts) *DefaultStorage {
 }
 
 func (s *DefaultStorage) writestreem(key string, r io.Reader) error {
-    path,name := s.pathTransform(key)
-    if err := os.MkdirAll(s.root+"/"+path, os.ModePerm); err != nil {
+    path,name := s.PathTransform(key)
+    if err := os.MkdirAll(s.Root+"/"+path, os.ModePerm); err != nil {
         return err
     }else {
         buf := new(bytes.Buffer)
         io.Copy(buf, r)
-        f, err := os.Create(MakePathToFile(s.root,path,name))
+        f, err := os.Create(MakePathToFile(s.Root,path,name))
         if err != nil {
             return err
         }else {
@@ -42,8 +42,8 @@ func (s *DefaultStorage) writestreem(key string, r io.Reader) error {
 }   
 
 func (s *DefaultStorage) reedstreem(key string) ([]byte, error) { 
-    path,name := s.pathTransform(key)
-    pathTofile := MakePathToFile(s.root,path,name)
+    path,name := s.PathTransform(key)
+    pathTofile := MakePathToFile(s.Root,path,name)
     f, err := os.Open(pathTofile)
     if err != nil {
         return nil, err
@@ -58,21 +58,21 @@ func (s *DefaultStorage) reedstreem(key string) ([]byte, error) {
     
 }
 func (s *DefaultStorage) exists(key string) bool {
-    path,name := s.pathTransform(key)
-    pathTofile := MakePathToFile(s.root,path,name)
+    path,name := s.PathTransform(key)
+    pathTofile := MakePathToFile(s.Root,path,name)
     _, err := os.Stat(pathTofile)
     return err == nil
 }
 
 func (s *DefaultStorage) delete(key string) error {
-    path,name := s.pathTransform(key)
-    pathTofile := MakePathToFile(s.root,path,name)
+    path,name := s.PathTransform(key)
+    pathTofile := MakePathToFile(s.Root,path,name)
     return os.Remove(pathTofile)
     
 }
 
 func (s *DefaultStorage) deleteAll() error {
-   return os.RemoveAll(s.root)
+   return os.RemoveAll(s.Root)
 }
 
 
