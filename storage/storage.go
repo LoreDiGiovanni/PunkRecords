@@ -15,11 +15,11 @@ type StorageOpts struct {
 
 type Storage interface {
     // key is the file name
-    writestreem(key string , r io.Reader) error
-    reedstreem(key string) ([]byte,error)
-    delete(key string ) error
-    deleteAll() error 
-    exists(key string) bool
+    Writestreem(key string , r io.Reader) error
+    Reedstreem(key string) ([]byte,error)
+    Delete(key string ) error
+    DeleteAll() error 
+    Exists(key string) bool
 
 }
 

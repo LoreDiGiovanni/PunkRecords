@@ -19,7 +19,11 @@ func NewDefaultStorage(options StorageOpts) *DefaultStorage {
     }
 }
 
-func (s *DefaultStorage) writestreem(key string, r io.Reader) error {
+func (s *DefaultStorage) Writestreem(key string, r io.Reader) error {
+    if s.Exists(key) {
+       log.Printf("[DefaultStorage] Already exists in %s\n",s.Root)
+       return nil  
+    }
     path,name := s.PathTransform(key)
     if err := os.MkdirAll(s.Root+"/"+path, os.ModePerm); err != nil {
         return err
@@ -34,14 +38,14 @@ func (s *DefaultStorage) writestreem(key string, r io.Reader) error {
             if err != nil {
                 return err
             }else {
-                log.Printf("written %d bytes => %s\n", n, path)
+                log.Printf("[DefaultStorage] written %d bytes \n", n)
                 return nil
             }
         }
     }
 }   
 
-func (s *DefaultStorage) reedstreem(key string) ([]byte, error) { 
+func (s *DefaultStorage) Reedstreem(key string) ([]byte, error) { 
     path,name := s.PathTransform(key)
     pathTofile := MakePathToFile(s.Root,path,name)
     f, err := os.Open(pathTofile)
@@ -57,21 +61,21 @@ func (s *DefaultStorage) reedstreem(key string) ([]byte, error) {
     }
     
 }
-func (s *DefaultStorage) exists(key string) bool {
+func (s *DefaultStorage) Exists(key string) bool {
     path,name := s.PathTransform(key)
     pathTofile := MakePathToFile(s.Root,path,name)
     _, err := os.Stat(pathTofile)
     return err == nil
 }
 
-func (s *DefaultStorage) delete(key string) error {
+func (s *DefaultStorage) Delete(key string) error {
     path,name := s.PathTransform(key)
     pathTofile := MakePathToFile(s.Root,path,name)
     return os.Remove(pathTofile)
     
 }
 
-func (s *DefaultStorage) deleteAll() error {
+func (s *DefaultStorage) DeleteAll() error {
    return os.RemoveAll(s.Root)
 }
 

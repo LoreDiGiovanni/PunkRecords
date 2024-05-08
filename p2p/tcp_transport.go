@@ -1,7 +1,7 @@
 package p2p
 
 import (
-	"fmt"
+    "fmt"
 	"net"
 	"sync"
     "log"
@@ -9,27 +9,19 @@ import (
 
 )
 type TCPPeer struct{
-    conn net.Conn
-    outbound bool
+    net.Conn
 }
 
-func NewTCPPeer(conn net.Conn, outbound bool) *TCPPeer {
+func NewTCPPeer(conn net.Conn) *TCPPeer {
     return &TCPPeer{
-        conn: conn,
-        outbound: outbound,
+        Conn: conn,
     } 
 }
 
-func (p *TCPPeer) Close() error {
-    return p.conn.Close()
-}
 
-func (p *TCPPeer) RemoteAddr() string {
-    return p.conn.RemoteAddr().String()
-}
 
 func (p *TCPPeer) Send(b []byte) error {
-    _, err := p.conn.Write(b)
+    _, err := p.Write(b)
     return err
 }
 
@@ -73,10 +65,10 @@ func (t *TCPTransport) acceptLoop() {
     for {
         conn, err := t.listener.Accept()
         if err != nil {
-            fmt.Printf("[TCP] Accepting error: %s\n", err)
+            log.Printf("[TCP] Accepting error: %s\n", err)
             break
         }else {
-            fmt.Printf("[TCP] Accepted connection from %+v\n", conn.RemoteAddr())
+            log.Printf("[TCP] Accepted connection from %+v\n", conn.RemoteAddr())
         }
         go t.handleConn(conn)
     }
@@ -92,13 +84,13 @@ func (t *TCPTransport) Dial(addr string) error {
 }
 
 func (t *TCPTransport) handleConn(conn net.Conn){
-    peer := NewTCPPeer(conn, true)
+    peer := NewTCPPeer(conn)
     var err error
     defer func() {
         if err != nil {
-            fmt.Printf("[TCP] %+v: Drop connection Error: %+v\n", peer.conn.RemoteAddr(), err)
+            log.Printf("[TCP] %+v: Drop connection Error: %+v\n", peer.RemoteAddr(), err)
         }
-        peer.Close()
+        peer.Conn.Close()
     }()
     if  t.OnPeer != nil{
         err = t.OnPeer(peer)
@@ -110,18 +102,18 @@ func (t *TCPTransport) handleConn(conn net.Conn){
         }else if !ok{
             err = fmt.Errorf("[TCP] Handshake denied")
         }else{
-            msg := Message{From: conn.RemoteAddr()}
-            fmt.Printf("[TCP] Connection from %+v\n", peer)
+            msg := Message{From: conn.RemoteAddr().String()}
+            log.Printf("[TCP] Connection from %s\n", peer.RemoteAddr().String())
             for {
                 // When the connection is closed, we get an EOF error
                 // TODO: make a better error handling 
                 if err = t.Decoder.Decode(conn,&msg); err != nil {
                     if err == io.EOF {
-                        fmt.Printf("[TCP] Connection closed by %+v\n", peer)
+                        log.Printf("[TCP] Connection closed by %+v\n", peer)
                         err = nil 
                         break
                     }else {
-                        fmt.Printf("[TCP] Decoding error: %s\n", err)
+                        log.Printf("[TCP] Decoding error: %s\n", err)
                     }
                 }else{
                     t.msgch <-msg
@@ -129,6 +121,9 @@ func (t *TCPTransport) handleConn(conn net.Conn){
             }
         }
     } 
+}
+func (t *TCPTransport) Decode(r io.Reader, msg *Message) error {
+    return t.Decoder.Decode(r, msg)
 }
 
 func (t *TCPTransport) Consume() <-chan Message {
@@ -138,3 +133,4 @@ func (t *TCPTransport) Consume() <-chan Message {
 func (t *TCPTransport) Close() error {
     return t.listener.Close()
 }
+

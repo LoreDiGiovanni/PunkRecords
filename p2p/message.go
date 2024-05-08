@@ -1,11 +1,7 @@
 package p2p
 
-import (
-    "net" 
-)
-
 type Message struct{
-    From net.Addr
+    From string 
     Payload []byte
 }
 

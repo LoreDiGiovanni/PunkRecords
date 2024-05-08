@@ -20,13 +20,13 @@ func TestDefaultStorage(t *testing.T) {
     expectedFilename := "8b5bfc68fe7e1e7575c793bc4d74abb8ff60ebb1"
     bytesstring := []byte("hello world")
     data := bytes.NewReader(bytesstring)
-    if err := storage.writestreem("FileName", data); err != nil {
+    if err := storage.Writestreem("FileName", data); err != nil {
         t.Fatal(err)
     }else {
         path, filename := CASPathTransformFunc("FileName")
         assert.Equal(t,path, expextedPath) 
         assert.Equal(t,filename, expectedFilename)
-        b, err := storage.reedstreem("FileName")
+        b, err := storage.Reedstreem("FileName")
         if err != nil {
             t.Fatal(err)
         }else {
@@ -34,7 +34,7 @@ func TestDefaultStorage(t *testing.T) {
                 t.Fatal("not equal\n expected: ", bytesstring, "\n got: ", b) 
             }
         }
-        if err := storage.delete("FileName"); err != nil {
+        if err := storage.Delete("FileName"); err != nil {
             t.Fatal(err)
         }else {
             
