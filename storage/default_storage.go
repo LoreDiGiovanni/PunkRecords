@@ -38,7 +38,7 @@ func (s *DefaultStorage) Writestreem(key string, r io.Reader) error {
             if err != nil {
                 return err
             }else {
-                log.Printf("[DefaultStorage] written %d bytes \n", n)
+                log.Printf("[DefaultStorage] Written %d bytes in %s \n", n,s.Root)
                 return nil
             }
         }

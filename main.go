@@ -2,47 +2,39 @@ package main
 
 import (
 	"bytes"
-	"fmt"
-	"time"
-
+    "time"
 	"github.com/LoreDiGiovanni/punkrecords/p2p"
 	"github.com/LoreDiGiovanni/punkrecords/storage"
 )
 
 func main() {
-    
+    s1 := makeServer(":8000","./db2")
+    s2 := makeServer(":9000","./db1")
+    s1.Transport.(*p2p.TCPTransport).OnPeer = s1.onPeer
+
+    go s2.Start()
+    time.Sleep(2 * time.Second)
+    go s1.Start()
+    time.Sleep(2 * time.Second)
+    s1.StoreData("test", bytes.NewReader([]byte("hello world ")))
+    s1.KnowPeers = append(s1.KnowPeers, ":9000")
+
+
+    select {}
+}
+
+func makeServer(port string,root string,knowPeers ...string) *server {
     transportOpts := p2p.TransportOpts{
-        ListenAddr: ":9000", 
-        Handshake: p2p.NoHandshakeFunc,
+        ListenAddr: port, 
         Decoder: p2p.BytesDecoder{},
         OnPeer: nil,
     }
-    transport := p2p.NewTCPTransport(transportOpts) 
-
     storageOpts := storage.StorageOpts{
-        Root: "./db1",
+        Root: root,
         PathTransform: storage.CASPathTransformFunc, 
     }
     stor := storage.NewDefaultStorage(storageOpts)
-    server1 := NewServer(transport,stor)
-    server1.Transport.(*p2p.TCPTransport).OnPeer = server1.onPeer
-    go func() {
-        server1.Start()
-    }()
-
-    time.Sleep(time.Second*3)
-    fmt.Printf("\n\n")
-    
-    stor.Root = "./db2"
-    transport.ListenAddr = ":8000"
-    server2 := NewServer(transport,stor)
-    server2.KnowPeers = append(server1.KnowPeers, ":9000")
-    server2.Transport.(*p2p.TCPTransport).OnPeer = server2.onPeer
-    server2.Start()
-
-    time.Sleep(time.Second*3)
-    server2.StoreData("test", bytes.NewReader([]byte("hello world ")))
-
-    select {}
+    transport := p2p.NewTCPTransport(transportOpts) 
+    return NewServer(transport,stor)
 }
 

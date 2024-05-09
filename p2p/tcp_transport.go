@@ -1,7 +1,6 @@
 package p2p
 
 import (
-    "fmt"
 	"net"
 	"sync"
     "log"
@@ -30,9 +29,8 @@ type TCPTransport struct {
     TransportOpts
     listenAddres string  
     listener     net.Listener
-    msgch       chan Message
-    
-    mu           sync.RWMutex
+    msgch        chan Message
+    wg           sync.WaitGroup 
     peers        map[net.Addr]Peer
 }
 
@@ -95,30 +93,22 @@ func (t *TCPTransport) handleConn(conn net.Conn){
     if  t.OnPeer != nil{
         err = t.OnPeer(peer)
     }
-    if err == nil {
-        ok ,err := t.Handshake(conn)
-        if err != nil {
-            err = fmt.Errorf("[TCP] Handshake error: %s", err)
-        }else if !ok{
-            err = fmt.Errorf("[TCP] Handshake denied")
-        }else{
-            msg := Message{From: conn.RemoteAddr().String()}
-            log.Printf("[TCP] Connection from %s\n", peer.RemoteAddr().String())
-            for {
-                // When the connection is closed, we get an EOF error
-                // TODO: make a better error handling 
-                if err = t.Decoder.Decode(conn,&msg); err != nil {
-                    if err == io.EOF {
-                        log.Printf("[TCP] Connection closed by %+v\n", peer)
-                        err = nil 
-                        break
-                    }else {
-                        log.Printf("[TCP] Decoding error: %s\n", err)
-                    }
-                }else{
-                    t.msgch <-msg
-                }
+    //TODO: Remove msgch for transport 
+    msg := Message{From: conn.RemoteAddr().String()}
+    log.Printf("[TCP] Connection from %s\n", peer.RemoteAddr().String())
+    for {
+        // When the connection is closed, we get an EOF error
+        // TODO: make a better error handling 
+        if err = t.Decoder.Decode(conn,&msg); err != nil {
+            if err == io.EOF {
+                log.Printf("[TCP] Connection closed by %+v\n", peer)
+                err = nil 
+                break
+            }else {
+                log.Printf("[TCP] Decoding error: %s\n", err)
             }
+        }else{
+            t.msgch <-msg
         }
     } 
 }
@@ -134,3 +124,6 @@ func (t *TCPTransport) Close() error {
     return t.listener.Close()
 }
 
+func (t *TCPTransport) GetAddr() string {
+    return t.ListenAddr
+}

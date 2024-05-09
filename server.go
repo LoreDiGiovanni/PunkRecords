@@ -64,11 +64,10 @@ func (s *server) StoreData(key string, r io.Reader) error {
 }
 
 func (s *server) Broadcast(payload payload) error{
-
     buf := new(bytes.Buffer) ; 
     gob.NewEncoder(buf).Encode(payload)
     for _, peer := range s.ActivePeers {
-        log.Printf("[MSG] To %s: %s\n", peer.RemoteAddr(), payload)
+        log.Printf("[MSG][%s] Send to[%s]: [%s,%s]\n",s.Transport.GetAddr(), peer.RemoteAddr(), payload.Key,payload.Data)
         peer.Send(buf.Bytes())
     }
     
@@ -92,10 +91,10 @@ func (s *server) loop() error {
                 var p payload 
                 err := gob.NewDecoder(bytes.NewReader(msg.Payload)).Decode(&p)
                 if err != nil {
-                    log.Fatal("Failed to decode message: ", err)
+                    log.Fatal("[MSG] Failed to decode message: ", err)
                 }else {
-                    log.Printf("[MSG] From %s: %s\n", msg.From, p)
-                    s.Storage.Writestreem(p.Key, bytes.NewReader(p.Data))
+                    log.Printf("[MSG][%s] Received From [%s] Message: [%s,%s]\n",s.Transport.GetAddr(), msg.From,p.Key,p.Data)
+                    s.StoreData(p.Key, bytes.NewReader(p.Data))
                 }
             case <-s.quitch:
                 return nil 
@@ -107,5 +106,4 @@ func (s *server) onPeer(peer p2p.Peer) error{
     s.ActivePeers[peer.RemoteAddr()] = peer
     log.Printf("[TCP] Exec onPear %s \n", peer.RemoteAddr())
     return nil
-    
 }
