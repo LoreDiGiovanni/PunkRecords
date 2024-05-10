@@ -4,6 +4,7 @@ import (
     "io"
     "os"
     "log"
+    "fmt"
     "bytes"
 )
 
@@ -22,7 +23,7 @@ func NewDefaultStorage(options StorageOpts) *DefaultStorage {
 func (s *DefaultStorage) Writestreem(key string, r io.Reader) error {
     if s.Exists(key) {
        log.Printf("[DefaultStorage] Already exists in %s\n",s.Root)
-       return nil  
+       return fmt.Errorf("ErrAlreadyExists")  
     }
     path,name := s.PathTransform(key)
     if err := os.MkdirAll(s.Root+"/"+path, os.ModePerm); err != nil {

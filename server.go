@@ -55,6 +55,9 @@ func (s *server) StoreData(key string, r io.Reader) error {
     tee := io.TeeReader(r, buf)
     err := s.Storage.Writestreem(key, tee)
     if err != nil {
+        if err.Error() == "ErrAlreadyExists" {
+            return nil
+        }
         return err
     }else {
         payload := payload{Key: key, Data: buf.Bytes()}
