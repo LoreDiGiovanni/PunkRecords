@@ -5,6 +5,7 @@ import (
 	"sync"
     "log"
     "io"
+    "encoding/gob"
 
 )
 type TCPPeer struct{
@@ -16,8 +17,6 @@ func NewTCPPeer(conn net.Conn) *TCPPeer {
         Conn: conn,
     } 
 }
-
-
 
 func (p *TCPPeer) Send(b []byte) error {
     _, err := p.Write(b)
@@ -72,42 +71,39 @@ func (t *TCPTransport) acceptLoop() {
     }
 }
 
-func (t *TCPTransport) Dial(addr string) error {
+func (t *TCPTransport) Dial(addr string) (net.Conn,error) {
     conn, err := net.Dial("tcp", addr)
     if err != nil {
-        return err
+        return nil,err
     }
     go t.handleConn(conn)
-    return nil
+    return conn, nil
 }
 
 func (t *TCPTransport) handleConn(conn net.Conn){
-    peer := NewTCPPeer(conn)
+    gob.Register(Message{})
+    gob.Register(StoreFile{})
+    gob.Register(GetFile{})
     var err error
     defer func() {
         if err != nil {
-            log.Printf("[TCP] %+v: Drop connection Error: %+v\n", peer.RemoteAddr(), err)
+            log.Printf("[TCP] %+v: Drop connection Error: %+v\n", conn.RemoteAddr(), err)
         }
-        peer.Conn.Close()
+        conn.Close()
     }()
-    if  t.OnPeer != nil{
-        err = t.OnPeer(peer)
-    }
-    //TODO: Remove msgch for transport 
-    msg := Message{From: conn.RemoteAddr().String()}
-    log.Printf("[TCP] Connection from %s\n", peer.RemoteAddr().String())
+    msg := Message{From: t.GetAddr(),}
     for {
-        // When the connection is closed, we get an EOF error
-        // TODO: make a better error handling 
-        if err = t.Decoder.Decode(conn,&msg); err != nil {
+        err := gob.NewDecoder(conn).Decode(&msg)
+        if err != nil {
             if err == io.EOF {
-                log.Printf("[TCP] Connection closed by %+v\n", peer)
+                log.Printf("[TCP] Connection closed by %+v\n", conn.RemoteAddr())
                 err = nil 
                 break
             }else {
                 log.Printf("[TCP] Decoding error: %s\n", err)
             }
         }else{
+            log.Printf("[TCP] Decoded Payload: %s\n",msg.Payload)
             t.msgch <-msg
         }
     } 

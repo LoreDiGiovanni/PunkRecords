@@ -14,7 +14,7 @@ type Transport interface {
     ListenAndAccept() error
     // Method return a channel for consume messages     
     Consume() <-chan Message
-    Dial(addr string) error 
+    Dial(addr string) (net.Conn,error)
     GetAddr() string
     //Close() error
 }

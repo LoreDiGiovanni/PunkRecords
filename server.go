@@ -34,17 +34,6 @@ func (s *server) Close(){
     close(s.quitch)
 }
 
-func (s *server) BootstrapKnownPeers() {
-    for _, addr := range s.KnowPeers {
-        err := s.Transport.Dial(addr); 
-        if err != nil {
-            log.Printf("[TCP] Pear %s Offline\n", addr) 
-        }else {
-            log.Printf("[TCP] Pear %s Online\n", addr)
-        }
-    }
-}
-
 type payload struct {
     Key string
     Data []byte
@@ -60,20 +49,32 @@ func (s *server) StoreData(key string, r io.Reader) error {
         }
         return err
     }else {
-        payload := payload{Key: key, Data: buf.Bytes()}
-        return s.Broadcast(payload)
+        payload := p2p.StoreFile{Key: key, BufSize: int64(buf.Len())}
+        return s.Broadcast(payload,buf)
     }
 
 }
 
-func (s *server) Broadcast(payload payload) error{
+func (s *server) Broadcast(payload p2p.StoreFile, r io.Reader) error{
     buf := new(bytes.Buffer) ; 
-    gob.NewEncoder(buf).Encode(payload)
-    for _, peer := range s.ActivePeers {
-        log.Printf("[MSG][%s] Send to[%s]: [%s,%s]\n",s.Transport.GetAddr(), peer.RemoteAddr(), payload.Key,payload.Data)
-        peer.Send(buf.Bytes())
+    message := p2p.Message{
+        From: s.Transport.GetAddr(),
+        Payload: payload,
     }
-    
+    gob.NewEncoder(buf).Encode(message)
+    for _, addr := range s.KnowPeers {
+        conn, err := s.Transport.Dial(addr); 
+        if err != nil {
+            log.Printf("[SERVER] %s Offline\n",addr)
+        }else {
+            n, err := conn.Write(buf.Bytes())
+            if err != nil{
+                log.Printf("[SERVER] %s Unrichable\n",addr)
+            }else {
+                log.Printf("[SERVER] %s Sent %d bytes\n",addr, n)
+            }
+        }
+    }
     return nil
 }
 
@@ -81,7 +82,6 @@ func (s *server) Start() error {
     if err := s.Transport.ListenAndAccept(); err != nil {
         return err
     }else {
-        s.BootstrapKnownPeers()
         go s.loop()
         return nil
     } 
@@ -91,18 +91,29 @@ func (s *server) loop() error {
     for {
         select {
             case msg := <-s.Transport.Consume():
-                var p payload 
-                err := gob.NewDecoder(bytes.NewReader(msg.Payload)).Decode(&p)
-                if err != nil {
-                    log.Fatal("[MSG] Failed to decode message: ", err)
-                }else {
-                    log.Printf("[MSG][%s] Received From [%s] Message: [%s,%s]\n",s.Transport.GetAddr(), msg.From,p.Key,p.Data)
-                    s.StoreData(p.Key, bytes.NewReader(p.Data))
-                }
+                log.Printf("[MSG][%s] Received From [%s]\n",s.Transport.GetAddr(), msg.From)
+                s.handleMessagePayload(&msg)
+                //s.StoreData(p.Key, bytes.NewReader(p.Data))
             case <-s.quitch:
                 return nil 
         }  
     }
+}
+
+
+func (s *server) handleMessagePayload(msg *p2p.Message) error {
+    log.Printf("\t Received %s\n", msg.Payload)
+    switch msg.Payload.(type) {
+    case p2p.StoreFile:
+        p := msg.Payload.(p2p.StoreFile)
+        log.Printf("\t Received %s :)\n",p.Key,)
+        return nil
+    case p2p.GetFile:
+        p := msg.Payload.(p2p.GetFile)
+        log.Printf("\t Received %s :)\n",p.Key,)
+        return nil
+    }
+    return nil
 }
 
 func (s *server) onPeer(peer p2p.Peer) error{
