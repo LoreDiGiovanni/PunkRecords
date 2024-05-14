@@ -13,7 +13,7 @@ type Transport interface {
     // Method that have to listen, accept and handle connections
     ListenAndAccept() error
     // Method return a channel for consume messages     
-    Consume() <-chan Message
+    Consume() <-chan net.Conn 
     Dial(addr string) (net.Conn,error)
     GetAddr() string
     //Close() error

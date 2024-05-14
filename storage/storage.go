@@ -15,7 +15,7 @@ type StorageOpts struct {
 
 type Storage interface {
     // key is the file name
-    Writestreem(key string , r io.Reader) error
+    Write(key string , r io.Reader) error
     Reedstreem(key string) ([]byte,error)
     Delete(key string ) error
     DeleteAll() error 

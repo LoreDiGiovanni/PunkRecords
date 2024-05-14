@@ -1,18 +1,15 @@
 package p2p
 
-type Message struct{
-    From string 
-    Payload interface{} 
+type Message struct {
+	Payload any
 }
 
-type StoreFile struct {
-    Key string
-    BufSize int64
+type MessageStoreFile struct {
+	Key  string
+	Size int64
 }
 
-type GetFile struct {
-    Key string
+type MessageGetFile struct {
+	Key string
+    Version int 
 }
-
-
-

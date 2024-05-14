@@ -20,7 +20,7 @@ func NewDefaultStorage(options StorageOpts) *DefaultStorage {
     }
 }
 
-func (s *DefaultStorage) Writestreem(key string, r io.Reader) error {
+func (s *DefaultStorage) Write(key string, r io.Reader) error {
     if s.Exists(key) {
        log.Printf("[DefaultStorage] Already exists in %s\n",s.Root)
        return fmt.Errorf("ErrAlreadyExists")  
